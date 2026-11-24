@@ -1,0 +1,676 @@
+{
+  "domain": "数据工程",
+  "subdirection": "数据采集、爬虫与RPA",
+  "app_name": "商品评论采集与口碑洞察平台",
+  "app_slug": "review-sentiment-hub",
+  "app_desc": "抓取多站点商品评论，解析归一评分与情感，去重建档后形成口碑趋势与报告的数据采集与口碑分析平台",
+  "frontend": "vue",
+  "backend": "python",
+  "port_frontend": 5173,
+  "port_backend": 8000,
+  "modules": [
+    {
+      "key": "review_site",
+      "name": "评论站点目录",
+      "entity": "站点配置",
+      "fields": [
+        "站点名称",
+        "站点类型",
+        "覆盖类目",
+        "评论语言",
+        "抓取配额"
+      ],
+      "statuses": [
+        "待接入",
+        "已接入",
+        "已停用"
+      ],
+      "actions": [
+        "接入站点",
+        "停用站点"
+      ],
+      "action_targets": [
+        "已接入",
+        "已停用"
+      ],
+      "metrics": [
+        "站点总数",
+        "已接入站点",
+        "已停用站点"
+      ],
+      "desc": "维护各评论站点的抓取范围与语言口径",
+      "page_shape": "crud-table",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "seed_keyword",
+      "name": "关键词种子池",
+      "entity": "关键词",
+      "fields": [
+        "关键词名称",
+        "所属类目",
+        "搜索意图",
+        "优先级",
+        "轮换周期"
+      ],
+      "statuses": [
+        "草稿",
+        "生效中",
+        "已轮换"
+      ],
+      "actions": [
+        "启用关键词",
+        "轮换关键词"
+      ],
+      "action_targets": [
+        "生效中",
+        "已轮换"
+      ],
+      "metrics": [
+        "关键词总数",
+        "生效中关键词",
+        "已轮换关键词"
+      ],
+      "desc": "管理种子关键词的生效与轮换计划",
+      "page_shape": "crud-table",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "review_crawl",
+      "name": "评论抓取任务",
+      "entity": "抓取任务",
+      "fields": [
+        "任务编号",
+        "站点标识",
+        "关键词标识",
+        "抓取深度",
+        "会话票据"
+      ],
+      "statuses": [
+        "待执行",
+        "执行中",
+        "已完成",
+        "失败待重试"
+      ],
+      "actions": [
+        "启动任务",
+        "标记完成",
+        "重试任务"
+      ],
+      "action_targets": [
+        "执行中",
+        "已完成",
+        "执行中"
+      ],
+      "metrics": [
+        "任务总数",
+        "执行中任务",
+        "失败任务"
+      ],
+      "desc": "按站点与关键词组合执行评论抓取并保存会话票据",
+      "page_shape": "crud-table",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "page_digest",
+      "name": "页面快文摘取",
+      "entity": "页面摘录",
+      "fields": [
+        "摘录编号",
+        "任务编号",
+        "页面指纹",
+        "正文摘要",
+        "结构标记"
+      ],
+      "statuses": [
+        "已摘取",
+        "已解析",
+        "已丢弃"
+      ],
+      "actions": [
+        "解析摘录",
+        "丢弃摘录"
+      ],
+      "action_targets": [
+        "已解析",
+        "已丢弃"
+      ],
+      "metrics": [
+        "摘录总数",
+        "已解析摘录",
+        "已丢弃摘录"
+      ],
+      "desc": "从抓取页面摘取快文并记录页面指纹用于去重",
+      "page_shape": "crud-table",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "review_parse",
+      "name": "评论解析器",
+      "entity": "解析规则",
+      "fields": [
+        "规则名称",
+        "站点标识",
+        "字段映射",
+        "嵌套层级",
+        "容错策略"
+      ],
+      "statuses": [
+        "草稿",
+        "已生效",
+        "已停用"
+      ],
+      "actions": [
+        "生效规则",
+        "停用规则"
+      ],
+      "action_targets": [
+        "已生效",
+        "已停用"
+      ],
+      "metrics": [
+        "规则总数",
+        "已生效规则",
+        "已停用规则"
+      ],
+      "desc": "按站点配置评论字段映射与解析容错策略",
+      "page_shape": "crud-table",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "rating_norm",
+      "name": "评分归一",
+      "entity": "归一记录",
+      "fields": [
+        "记录编号",
+        "原始评分",
+        "评分制式",
+        "归一评分",
+        "置信标记"
+      ],
+      "statuses": [
+        "待归一",
+        "已归一",
+        "存疑"
+      ],
+      "actions": [
+        "执行归一",
+        "标记存疑"
+      ],
+      "action_targets": [
+        "已归一",
+        "存疑"
+      ],
+      "metrics": [
+        "记录总数",
+        "已归一记录",
+        "存疑记录"
+      ],
+      "desc": "把不同站点的原始评分换算成统一百分制归一评分",
+      "page_shape": "crud-table",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "sentiment_label",
+      "name": "情感标注",
+      "entity": "情感记录",
+      "fields": [
+        "记录编号",
+        "评论文本",
+        "情感极性",
+        "强度分值",
+        "标注来源"
+      ],
+      "statuses": [
+        "待标注",
+        "已标注",
+        "复核中"
+      ],
+      "actions": [
+        "自动标注",
+        "提交复核"
+      ],
+      "action_targets": [
+        "已标注",
+        "复核中"
+      ],
+      "metrics": [
+        "记录总数",
+        "已标注记录",
+        "复核中记录"
+      ],
+      "desc": "对评论文本生成情感极性与强度标注并支持人工复核",
+      "page_shape": "crud-table",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "review_dedup",
+      "name": "评论去重",
+      "entity": "去重记录",
+      "fields": [
+        "记录编号",
+        "评论指纹",
+        "相似簇号",
+        "保留标记",
+        "合并依据"
+      ],
+      "statuses": [
+        "待比对",
+        "已去重",
+        "已合并"
+      ],
+      "actions": [
+        "执行比对",
+        "合并簇"
+      ],
+      "action_targets": [
+        "已去重",
+        "已合并"
+      ],
+      "metrics": [
+        "记录总数",
+        "已去重记录",
+        "已合并记录"
+      ],
+      "desc": "按评论指纹与相似簇完成跨站点评论去重与合并",
+      "page_shape": "crud-table",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "author_profile",
+      "name": "作者画像",
+      "entity": "作者档案",
+      "fields": [
+        "作者指纹",
+        "站点集合",
+        "活跃度等级",
+        "可信等级",
+        "最近活跃"
+      ],
+      "statuses": [
+        "已建档",
+        "已更新",
+        "已冻结"
+      ],
+      "actions": [
+        "更新画像",
+        "冻结画像"
+      ],
+      "action_targets": [
+        "已更新",
+        "已冻结"
+      ],
+      "metrics": [
+        "档案总数",
+        "已更新档案",
+        "已冻结档案"
+      ],
+      "desc": "汇总跨站点作者身份并维护活跃度与可信等级",
+      "page_shape": "crud-table",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "review_sentiment_store",
+      "name": "口碑情感库",
+      "entity": "情感样本",
+      "fields": [
+        "样本编号",
+        "情感极性",
+        "强度分值",
+        "类目归属",
+        "入档时间"
+      ],
+      "statuses": [
+        "暂存",
+        "已入档",
+        "已剔除"
+      ],
+      "actions": [
+        "入档样本",
+        "剔除样本"
+      ],
+      "action_targets": [
+        "已入档",
+        "已剔除"
+      ],
+      "metrics": [
+        "样本总数",
+        "已入档样本",
+        "已剔除样本"
+      ],
+      "desc": "持久化情感样本形成可查询的口碑情感库",
+      "page_shape": "crud-table",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "aspect_extract",
+      "name": "方面词抽取",
+      "entity": "方面词",
+      "fields": [
+        "方面词名称",
+        "关联类目",
+        "出现频次",
+        "情感倾向",
+        "生效标记"
+      ],
+      "statuses": [
+        "候选",
+        "已生效",
+        "已淘汰"
+      ],
+      "actions": [
+        "生效方面词",
+        "淘汰方面词"
+      ],
+      "action_targets": [
+        "已生效",
+        "已淘汰"
+      ],
+      "metrics": [
+        "方面词总数",
+        "已生效词",
+        "已淘汰词"
+      ],
+      "desc": "从评论中抽取产品方面词并维护生效词表",
+      "page_shape": "crud-table",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "complaint_cluster",
+      "name": "投诉聚类",
+      "entity": "投诉簇",
+      "fields": [
+        "簇编号",
+        "簇主题",
+        "簇内条数",
+        "代表评论",
+        "严重等级"
+      ],
+      "statuses": [
+        "新建",
+        "已归并",
+        "已升级"
+      ],
+      "actions": [
+        "归并簇",
+        "升级簇"
+      ],
+      "action_targets": [
+        "已归并",
+        "已升级"
+      ],
+      "metrics": [
+        "簇总数",
+        "已归并簇",
+        "已升级簇"
+      ],
+      "desc": "把负面评论聚成投诉簇并维护严重等级",
+      "page_shape": "dag-graph",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "trend_stat",
+      "name": "趋势统计",
+      "entity": "趋势点",
+      "fields": [
+        "统计编号",
+        "统计周期",
+        "情感占比",
+        "环比变化",
+        "口径版本"
+      ],
+      "statuses": [
+        "待计算",
+        "已计算",
+        "已重算"
+      ],
+      "actions": [
+        "执行计算",
+        "触发重算"
+      ],
+      "action_targets": [
+        "已计算",
+        "已重算"
+      ],
+      "metrics": [
+        "点总数",
+        "已计算点",
+        "已重算点"
+      ],
+      "desc": "按周期计算情感占比趋势并支持口径重算",
+      "page_shape": "analysis-dashboard",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "crawl_quota",
+      "name": "抓取配额",
+      "entity": "配额记录",
+      "fields": [
+        "配额编号",
+        "站点标识",
+        "日配额上限",
+        "已用额度",
+        "重置周期"
+      ],
+      "statuses": [
+        "生效中",
+        "已触顶",
+        "已重置"
+      ],
+      "actions": [
+        "上调配额",
+        "重置配额"
+      ],
+      "action_targets": [
+        "生效中",
+        "已重置"
+      ],
+      "metrics": [
+        "记录总数",
+        "生效中记录",
+        "触顶记录"
+      ],
+      "desc": "控制各站点每日抓取额度并支持周期重置",
+      "page_shape": "crud-table",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "captcha_gate",
+      "name": "验证码闸口",
+      "entity": "闸口记录",
+      "fields": [
+        "闸口编号",
+        "站点标识",
+        "触发频率",
+        "处置策略",
+        "冷却时长"
+      ],
+      "statuses": [
+        "监控中",
+        "已触发",
+        "已冷却"
+      ],
+      "actions": [
+        "触发闸口",
+        "解除冷却"
+      ],
+      "action_targets": [
+        "已触发",
+        "已冷却"
+      ],
+      "metrics": [
+        "记录总数",
+        "已触发记录",
+        "已冷却记录"
+      ],
+      "desc": "记录站点验证码触发频率并执行冷却处置",
+      "page_shape": "crud-table",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "crawl_retry",
+      "name": "失败重试队列",
+      "entity": "重试项",
+      "fields": [
+        "队列编号",
+        "失败原因",
+        "重试次数",
+        "退避间隔",
+        "下次执行"
+      ],
+      "statuses": [
+        "排队中",
+        "重试中",
+        "已放弃"
+      ],
+      "actions": [
+        "执行重试",
+        "放弃重试"
+      ],
+      "action_targets": [
+        "重试中",
+        "已放弃"
+      ],
+      "metrics": [
+        "队列总数",
+        "重试中项",
+        "已放弃项"
+      ],
+      "desc": "按退避策略重试失败的抓取任务并在上限后放弃",
+      "page_shape": "job-timeline",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "review_export",
+      "name": "口碑导出中心",
+      "entity": "导出任务",
+      "fields": [
+        "导出编号",
+        "数据范围",
+        "字段清单",
+        "文件指纹",
+        "导出状态"
+      ],
+      "statuses": [
+        "排队中",
+        "导出中",
+        "已完成"
+      ],
+      "actions": [
+        "开始导出",
+        "标记完成"
+      ],
+      "action_targets": [
+        "导出中",
+        "已完成"
+      ],
+      "metrics": [
+        "任务总数",
+        "导出中任务",
+        "已完成任务"
+      ],
+      "desc": "按数据范围导出口碑数据集并保留文件指纹",
+      "page_shape": "crud-table",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "opinion_report",
+      "name": "口碑报告",
+      "entity": "报告文档",
+      "fields": [
+        "报告编号",
+        "覆盖周期",
+        "正面要点",
+        "负面要点",
+        "发布版本"
+      ],
+      "statuses": [
+        "草稿",
+        "已发布",
+        "已归档"
+      ],
+      "actions": [
+        "发布报告",
+        "归档报告"
+      ],
+      "action_targets": [
+        "已发布",
+        "已归档"
+      ],
+      "metrics": [
+        "报告总数",
+        "已发布报告",
+        "已归档报告"
+      ],
+      "desc": "聚合口碑洞察生成周期报告并管理发布版本",
+      "page_shape": "crud-table",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "sentiment_review",
+      "name": "标注复核台",
+      "entity": "复核事项",
+      "fields": [
+        "事项编号",
+        "争议样本",
+        "原标注",
+        "改派结果",
+        "复核结论"
+      ],
+      "statuses": [
+        "待复核",
+        "复核中",
+        "已裁定"
+      ],
+      "actions": [
+        "开始复核",
+        "提交裁定"
+      ],
+      "action_targets": [
+        "复核中",
+        "已裁定"
+      ],
+      "metrics": [
+        "事项总数",
+        "复核中事项",
+        "已裁定事项"
+      ],
+      "desc": "组织争议情感样本的人工复核与裁定",
+      "page_shape": "crud-table",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "platform_metrics",
+      "name": "采集度量总览",
+      "entity": "度量项",
+      "fields": [
+        "度量名称",
+        "统计窗口",
+        "当前值",
+        "环比值",
+        "告警阈值"
+      ],
+      "statuses": [
+        "正常",
+        "关注",
+        "告警"
+      ],
+      "actions": [
+        "刷新度量",
+        "确认告警"
+      ],
+      "action_targets": [
+        "正常",
+        "关注"
+      ],
+      "metrics": [
+        "度量总数",
+        "告警度量",
+        "关注度量"
+      ],
+      "desc": "汇总评论采集链路的运行度量并触达告警阈值",
+      "page_shape": "crud-table",
+      "_page_shape_explicit": true
+    }
+  ]
+}
